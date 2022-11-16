@@ -1,0 +1,58 @@
+---
+- hosts: all
+  become: true
+  pre_tasks:
+
+  - name: Repository Index Update on Ubuntu
+    apt:
+      upgrade: dist
+      update_cache: yes
+    changed_when: false
+    when: ansible_distribution == "Ubuntu"
+
+- hosts: all
+  become: true
+  tasks: 
+
+  - name: install docker ubuntu
+    apt:
+      name: docker.io
+      state: latest
+    when: ansible_distribution == "Ubuntu"
+
+  - name: Installing docker SDK on Ubuntu
+    apt: 
+        name: python3-docker
+        update_cache: yes
+        cache_valid_time: 3600
+    when: ansible_distribution == "Ubuntu"
+
+  - name: alow docker by permission on Ubuntu
+    shell: 'sudo usermod -aG docker $USER'
+    when: ansible_distribution == "Ubuntu"
+  
+
+  - name: installing docker SDK on CentOS
+    yum:
+       name: python-docker-py
+       update_cache: yes
+    when: ansible_distribution == "CentOS"
+
+  - name: Starting and enabling docker
+    service:
+      name: docker
+      state: started
+
+
+  - name: cppy dockerfile
+    copy: src=dockerfile dest=/robin/docker/
+
+  - name: docker build
+    docker_image:
+       name: containerforansible
+       build:
+          path: /robin/docker/
+          args:
+            listen_port: 8080
+       source: build
+
